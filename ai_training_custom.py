@@ -53,7 +53,7 @@ dataset_volume_mount = k8s.V1VolumeMount(
 )
 
 # Model volume
-model_volume_pvc_existing = ''
+model_volume_pvc_existing = 'test'
 model_volume = k8s.V1Volume(
     name=model_volume_pvc_existing,
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=model_volume_pvc_existing),
