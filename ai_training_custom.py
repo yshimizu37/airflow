@@ -33,7 +33,7 @@ ai_training_run_dag = DAG(
 )
 
 # Define Kubernetes namespace to execute DAG in
-namespace = 'admin'
+namespace = 'airflow-git'
 
 ## Define volume details (change values as necessary to match your environment)
 
