@@ -25,7 +25,7 @@ ai_training_run_dag_default_args = {
 
 ## Define DAG details
 ai_training_run_dag = DAG(
-    dag_id='ai_training_run',
+    dag_id='ai_training_run_custom2',
     default_args=ai_training_run_dag_default_args,
     schedule_interval=None,
     start_date=days_ago(2),
@@ -33,7 +33,7 @@ ai_training_run_dag = DAG(
 )
 
 # Define Kubernetes namespace to execute DAG in
-namespace = 'airflow'
+namespace = 'airflow-git'
 
 ## Define volume details (change values as necessary to match your environment)
 
