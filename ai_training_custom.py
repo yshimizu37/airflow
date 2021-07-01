@@ -25,7 +25,7 @@ ai_training_run_dag_default_args = {
 
 ## Define DAG details
 ai_training_run_dag = DAG(
-    dag_id='ai_training_run',
+    dag_id='ai_training_run_custom',
     default_args=ai_training_run_dag_default_args,
     schedule_interval=None,
     start_date=days_ago(2),
