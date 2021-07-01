@@ -33,13 +33,13 @@ ai_training_run_dag = DAG(
 )
 
 # Define Kubernetes namespace to execute DAG in
-# namespace = 'airflow-git'
-namespace = 'admin'
+namespace = 'airflow-git'
+# namespace = 'admin'
 
 ## Define volume details (change values as necessary to match your environment)
 
 # Dataset volume
-dataset_volume_pvc_existing = 'gold-clone'
+dataset_volume_pvc_existing = 'gold-airflow'
 dataset_volume = k8s.V1Volume(
     name=dataset_volume_pvc_existing,
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=dataset_volume_pvc_existing),
@@ -53,7 +53,7 @@ dataset_volume_mount = k8s.V1VolumeMount(
 )
 
 # Model volume
-model_volume_pvc_existing = 'test'
+model_volume_pvc_existing = 'model'
 model_volume = k8s.V1Volume(
     name=model_volume_pvc_existing,
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=model_volume_pvc_existing),
