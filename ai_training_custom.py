@@ -102,19 +102,8 @@ with ai_training_run_dag as dag :
                 chmod -R 755 image_classification &&  \
                 python3 ./image_classification/data_prep.py --datadir " + str(dataset_volume_mount_path) + "/cats_and_dogs_filtered"],
         resources = data_prep_step_resources,
-        volumes=[
-            k8s.V1Volume(
-                name="{{ dag_run.conf['dataset_volume_pvc_existing'] }}",
-                persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name="{{ dag_run.conf['dataset_volume_pvc_existing'] }}"),
-            )
-        ],
-        volume_mounts=[
-            k8s.V1VolumeMount(
-                name="{{ dag_run.conf['dataset_volume_pvc_existing'] }}", 
-                mount_path=dataset_volume_mount_path, 
-                sub_path=None, 
-                read_only=False
-            )],
+        volumes=[dataset_volume, model_volume],
+        volume_mounts=[dataset_volume_mount, model_volume_mount],
         name="ai-training-run-data-prep",
         task_id="data-prep",
         is_delete_operator_pod=True,
