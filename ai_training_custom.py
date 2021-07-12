@@ -104,8 +104,8 @@ with ai_training_run_dag as dag :
         resources = data_prep_step_resources,
         volumes=[
             k8s.V1Volume(
-                name={{ dag_run.conf['dataset_volume_pvc_existing'] }},
-                persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name={{ dag_run.conf['dataset_volume_pvc_existing'] }}),
+                name="{{ dag_run.conf['dataset_volume_pvc_existing'] }}",
+                persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name="{{ dag_run.conf['dataset_volume_pvc_existing'] }}"),
             )
         ],
         volume_mounts=[
