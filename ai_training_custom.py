@@ -69,19 +69,14 @@ model_volume_mount = k8s.V1VolumeMount(
 
 # Data prep step
 data_prep_step_container_image = "python:3"
-# data_prep_step_command = ["echo", "'No data prep command entered'"] # Replace this echo command with the data prep command that you wish to execute
 data_prep_step_resources = {} # Hint: To request that 1 GPU be allocated to job pod, change to: {'limit_gpu': 1}
 
 # Training step
 train_step_container_image = "nvcr.io/nvidia/tensorflow:21.03-tf1-py3"
-# train_step_command = ["echo", "'No training command entered'"] # Replace this echo command with the training command that you wish to execute
 train_step_resources = {'limit_gpu': 1} # Hint: To request that 1 GPU be allocated to job pod, change to: {'limit_gpu': 1}
-train_step_batch_size = 128
-train_step_epochs = 15
 
 # Inference validation step
 validate_step_container_image = "python:3"
-# validate_step_command = ["echo", "'No inference validation command entered'"] # Replace this echo command with the inference validation command that you wish to execute
 validate_step_resources = {} # Hint: To request that 1 GPU be allocated to job pod, change to: {'limit_gpu': 1}
 
 ################################################################################################
@@ -107,8 +102,19 @@ with ai_training_run_dag as dag :
                 chmod -R 755 image_classification &&  \
                 python3 ./image_classification/data_prep.py --datadir " + str(dataset_volume_mount_path) + "/cats_and_dogs_filtered"],
         resources = data_prep_step_resources,
-        volumes=[dataset_volume, model_volume],
-        volume_mounts=[dataset_volume_mount, model_volume_mount],
+        volumes=[
+            k8s.V1Volume(
+                name={{ dag_run.conf['dataset_volume_pvc_existing'] }},
+                persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name={{ dag_run.conf['dataset_volume_pvc_existing'] }}),
+            )
+        ],
+        volume_mounts=[
+            k8s.V1VolumeMount(
+                name={{ dag_run.conf['dataset_volume_pvc_existing'] }}, 
+                mount_path=dataset_volume_mount_path, 
+                sub_path=None, 
+                read_only=False
+            )],
         name="ai-training-run-data-prep",
         task_id="data-prep",
         is_delete_operator_pod=True,
@@ -124,7 +130,7 @@ with ai_training_run_dag as dag :
             python3 -m pip install ipython kubernetes pandas tabulate && \
             git clone -b v1.2.3 https://github.com/NetApp/netapp-data-science-toolkit && \
             mv /netapp-data-science-toolkit/Kubernetes/ntap_dsutil_k8s.py / && \
-            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name=" + str(dataset_volume_pvc_existing) + " --snapshot-name=dataset-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run', key='return_value') }} --namespace=" + namespace],
+            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name={{ dag_run.conf['dataset_volume_pvc_existing'] }} --snapshot-name=dataset-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run', key='return_value') }} --namespace=" + namespace],
         name="ai-training-run-dataset-snapshot",
         task_id="dataset-snapshot",
         is_delete_operator_pod=True,
@@ -166,7 +172,7 @@ with ai_training_run_dag as dag :
             python3 -m pip install ipython kubernetes pandas tabulate && \
             git clone -b v1.2.3 https://github.com/NetApp/netapp-data-science-toolkit && \
             mv /netapp-data-science-toolkit/Kubernetes/ntap_dsutil_k8s.py / && \
-            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name=" + str(model_volume_pvc_existing) + " --snapshot-name=model-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run', key='return_value') }} --namespace=" + namespace],
+            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name={{ dag_run.conf['model_volume_pvc_existing'] }} --snapshot-name=model-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run', key='return_value') }} --namespace=" + namespace],
         name="ai-training-run-model-snapshot",
         task_id="model-snapshot",
         is_delete_operator_pod=True,
@@ -185,7 +191,7 @@ with ai_training_run_dag as dag :
             python3 -m pip install pandas matplotlib && \
             git clone https://github.com/yshimizu37/image_classification.git && \
             chmod -R 755 image_classification &&  \
-            python3 ./image_classification/validation.py --modeldir " + str(model_volume_mount_path) + " --epochs=" + str(train_step_epochs)],
+            python3 ./image_classification/validation.py --modeldir " + str(model_volume_mount_path) + " --epochs {{ dag_run.conf['epochs'] }}"],
         resources = validate_step_resources,
         volumes=[dataset_volume, model_volume],
         volume_mounts=[dataset_volume_mount, model_volume_mount],
