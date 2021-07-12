@@ -110,7 +110,7 @@ with ai_training_run_dag as dag :
         ],
         volume_mounts=[
             k8s.V1VolumeMount(
-                name={{ dag_run.conf['dataset_volume_pvc_existing'] }}, 
+                name="{{ dag_run.conf['dataset_volume_pvc_existing'] }}", 
                 mount_path=dataset_volume_mount_path, 
                 sub_path=None, 
                 read_only=False
