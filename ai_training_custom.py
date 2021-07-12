@@ -103,7 +103,7 @@ with ai_training_run_dag as dag :
         cmds=["/bin/bash", "-c"],
         arguments=["\
                 python3 -m pip install pandas && \
-                git clone https://github.com/yshimizu37/image_classification.git && \
+                git clone -b v1.2.3 https://github.com/yshimizu37/image_classification.git && \
                 chmod -R 755 image_classification &&  \
                 python3 ./image_classification/data_prep.py --datadir " + str(dataset_volume_mount_path) + "/cats_and_dogs_filtered"],
         resources = data_prep_step_resources,
@@ -164,7 +164,7 @@ with ai_training_run_dag as dag :
         cmds=["/bin/bash", "-c"],
         arguments=["\
             python3 -m pip install ipython kubernetes pandas tabulate && \
-            git clone https://github.com/NetApp/netapp-data-science-toolkit && \
+            git clone -b v1.2.3 https://github.com/NetApp/netapp-data-science-toolkit && \
             mv /netapp-data-science-toolkit/Kubernetes/ntap_dsutil_k8s.py / && \
             /ntap_dsutil_k8s.py create volume-snapshot --pvc-name=" + str(model_volume_pvc_existing) + " --snapshot-name=model-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run', key='return_value') }} --namespace=" + namespace],
         name="ai-training-run-model-snapshot",
