@@ -25,7 +25,7 @@ ai_training_run_dag_default_args = {
 
 ## Define DAG details
 ai_training_run_dag = DAG(
-    dag_id='ai_training_run',
+    dag_id='ai_training_run_2',
     default_args=ai_training_run_dag_default_args,
     schedule_interval=None,
     start_date=days_ago(2),
@@ -38,7 +38,7 @@ namespace = 'airflow-git'
 ## Define volume details (change values as necessary to match your environment)
 
 # Dataset volume
-dataset_volume_pvc_existing = 'gold-clone'
+dataset_volume_pvc_existing = 'gold-airflow'
 dataset_volume = k8s.V1Volume(
     name=dataset_volume_pvc_existing,
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=dataset_volume_pvc_existing),
@@ -52,7 +52,7 @@ dataset_volume_mount = k8s.V1VolumeMount(
 )
 
 # Model volume
-model_volume_pvc_existing = ''
+model_volume_pvc_existing = 'model'
 model_volume = k8s.V1Volume(
     name=model_volume_pvc_existing,
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=model_volume_pvc_existing),
