@@ -25,7 +25,7 @@ ai_training_run_dag_default_args = {
 
 ## Define DAG details
 ai_training_run_dag = DAG(
-    dag_id='ai_training_run_custom2',
+    dag_id='ai_training_run',
     default_args=ai_training_run_dag_default_args,
     schedule_interval=None,
     start_date=days_ago(2),
@@ -34,12 +34,11 @@ ai_training_run_dag = DAG(
 
 # Define Kubernetes namespace to execute DAG in
 namespace = 'airflow-git'
-# namespace = 'admin'
 
 ## Define volume details (change values as necessary to match your environment)
 
 # Dataset volume
-dataset_volume_pvc_existing = 'gold-airflow'
+dataset_volume_pvc_existing = 'gold-clone'
 dataset_volume = k8s.V1Volume(
     name=dataset_volume_pvc_existing,
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=dataset_volume_pvc_existing),
@@ -53,7 +52,7 @@ dataset_volume_mount = k8s.V1VolumeMount(
 )
 
 # Model volume
-model_volume_pvc_existing = 'model'
+model_volume_pvc_existing = ''
 model_volume = k8s.V1Volume(
     name=model_volume_pvc_existing,
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=model_volume_pvc_existing),
@@ -125,7 +124,7 @@ with ai_training_run_dag as dag :
             python3 -m pip install ipython kubernetes pandas tabulate && \
             git clone https://github.com/NetApp/netapp-data-science-toolkit && \
             mv /netapp-data-science-toolkit/Kubernetes/ntap_dsutil_k8s.py / && \
-            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name=" + str(dataset_volume_pvc_existing) + " --snapshot-name=dataset-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run_custom2', key='return_value') }} --namespace=" + namespace],
+            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name=" + str(dataset_volume_pvc_existing) + " --snapshot-name=dataset-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run', key='return_value') }} --namespace=" + namespace],
         name="ai-training-run-dataset-snapshot",
         task_id="dataset-snapshot",
         is_delete_operator_pod=True,
@@ -145,7 +144,7 @@ with ai_training_run_dag as dag :
             python3 -m pip install pandas && \
             git clone https://github.com/yshimizu37/image_classification.git && \
             chmod -R 755 image_classification &&  \
-            python3 ./image_classification/train.py --datadir " + str(dataset_volume_mount_path) + "/cats_and_dogs_filtered --modeldir " + str(model_volume_mount_path) + " --batchsize " + str(train_step_batch_size) + " --epochs " + str(train_step_epochs)],
+            python3 ./image_classification/train.py --datadir " + str(dataset_volume_mount_path) + "/cats_and_dogs_filtered --modeldir " + str(model_volume_mount_path) + " --batchsize {{ dag_run.conf['batch_size'] }} --epochs {{ dag_run.conf['epochs'] }}"],
         resources = train_step_resources,
         volumes=[dataset_volume, model_volume],
         volume_mounts=[dataset_volume_mount, model_volume_mount],
@@ -167,7 +166,7 @@ with ai_training_run_dag as dag :
             python3 -m pip install ipython kubernetes pandas tabulate && \
             git clone https://github.com/NetApp/netapp-data-science-toolkit && \
             mv /netapp-data-science-toolkit/Kubernetes/ntap_dsutil_k8s.py / && \
-            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name=" + str(model_volume_pvc_existing) + " --snapshot-name=model-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run_custom2', key='return_value') }} --namespace=" + namespace],
+            /ntap_dsutil_k8s.py create volume-snapshot --pvc-name=" + str(model_volume_pvc_existing) + " --snapshot-name=model-{{ task_instance.xcom_pull(task_ids='generate-uuid', dag_id='ai_training_run', key='return_value') }} --namespace=" + namespace],
         name="ai-training-run-model-snapshot",
         task_id="model-snapshot",
         is_delete_operator_pod=True,
